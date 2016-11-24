@@ -33,12 +33,14 @@ function defaultTransform() {
 export default function() {
   var filter = defaultFilter,
       extent = defaultExtent,
-      k0 = 0,
-      k1 = Infinity,
-      x0 = -k1,
-      x1 = k1,
-      y0 = x0,
-      y1 = x1,
+      kx0 = 0,
+      ky0 = 0,
+      kx1 = Infinity,
+      ky1 = Infinity,
+      x0 = -Infinity,
+      x1 = Infinity,
+      y0 = -Infinity,
+      y1 = Infinity,
       duration = 250,
       interpolate = interpolateZoom,
       gestures = [],
@@ -75,22 +77,27 @@ export default function() {
     }
   };
 
-  zoom.scaleBy = function(selection, k) {
+  zoom.scaleBy = function(selection, kx, ky) {
     zoom.scaleTo(selection, function() {
-      var k0 = this.__zoom.k,
-          k1 = typeof k === "function" ? k.apply(this, arguments) : k;
+      var k0 = this.__zoom.kx,
+          k1 = typeof kx === "function" ? kx.apply(this, arguments) : kx;
+      return k0 * k1;
+    }, function() {
+      var k0 = this.__zoom.ky,
+          k1 = typeof ky === "function" ? ky.apply(this, arguments) : ky;
       return k0 * k1;
     });
   };
 
-  zoom.scaleTo = function(selection, k) {
+  zoom.scaleTo = function(selection, kx, ky) {
     zoom.transform(selection, function() {
       var e = extent.apply(this, arguments),
           t0 = this.__zoom,
           p0 = centroid(e),
           p1 = t0.invert(p0),
-          k1 = typeof k === "function" ? k.apply(this, arguments) : k;
-      return constrain(translate(scale(t0, k1), p0, p1), e);
+          kx1 = typeof kx === "function" ? kx.apply(this, arguments) : kx,
+          ky1 = typeof ky === "function" ? ky.apply(this, arguments) : ky;
+      return constrain(translate(scale(t0, kx1, ky1), p0, p1), e);
     });
   };
 
@@ -103,14 +110,15 @@ export default function() {
     });
   };
 
-  function scale(transform, k) {
-    k = Math.max(k0, Math.min(k1, k));
-    return k === transform.k ? transform : new Transform(k, transform.x, transform.y);
+  function scale(transform, kx, ky) {
+    kx = Math.max(kx0, Math.min(kx1, kx));
+    ky = Math.max(ky0, Math.min(ky1, ky));
+    return (kx === transform.kx && ky === transform.ky) ? transform : new Transform(transform.x, transform.y, kx, ky);
   }
 
   function translate(transform, p0, p1) {
-    var x = p0[0] - p1[0] * transform.k, y = p0[1] - p1[1] * transform.k;
-    return x === transform.x && y === transform.y ? transform : new Transform(transform.k, x, y);
+    var x = p0[0] - p1[0] * transform.kx, y = p0[1] - p1[1] * transform.ky;
+    return x === transform.x && y === transform.y ? transform : new Transform(x, y, transform.kx, transform.ky);
   }
 
   function constrain(transform, extent) {
@@ -128,6 +136,7 @@ export default function() {
     return [(+extent[0][0] + +extent[1][0]) / 2, (+extent[0][1] + +extent[1][1]) / 2];
   }
 
+  // TODO: ky?
   function schedule(transition, transform, center) {
     transition
         .on("start.zoom", function() { gesture(this, arguments).start(); })
@@ -141,10 +150,10 @@ export default function() {
               w = Math.max(e[1][0] - e[0][0], e[1][1] - e[0][1]),
               a = that.__zoom,
               b = typeof transform === "function" ? transform.apply(that, args) : transform,
-              i = interpolate(a.invert(p).concat(w / a.k), b.invert(p).concat(w / b.k));
+              i = interpolate(a.invert(p).concat(w / a.kx), b.invert(p).concat(w / b.kx));
           return function(t) {
             if (t === 1) t = b; // Avoid rounding error on end.
-            else { var l = i(t), k = w / l[2]; t = new Transform(k, p[0] - l[0] * k, p[1] - l[1] * k); }
+            else { var l = i(t), kx = w / l[2]; t = new Transform(p[0] - l[0] * kx, p[1] - l[1] * kx, kx, kx); }
             g.zoom(null, t);
           };
         });
@@ -200,7 +209,8 @@ export default function() {
     if (!filter.apply(this, arguments)) return;
     var g = gesture(this, arguments),
         t = this.__zoom,
-        k = Math.max(k0, Math.min(k1, t.k * Math.pow(2, -event.deltaY * (event.deltaMode ? 120 : 1) / 500))),
+        kx = Math.max(kx0, Math.min(kx1, t.kx * Math.pow(2, -event.deltaY * (event.deltaMode ? 120 : 1) / 500))),
+        ky = Math.max(ky0, Math.min(ky1, t.ky * Math.pow(2, -event.deltaY * (event.deltaMode ? 120 : 1) / 500))),
         p = mouse(this);
 
     // If the mouse is in the same location as before, reuse it.
@@ -213,7 +223,7 @@ export default function() {
     }
 
     // If this wheel event won’t trigger a transform change, ignore it.
-    else if (t.k === k) return;
+    else if (t.kx === ky && t.ky === kx) return;
 
     // Otherwise, capture the mouse point and location at the start.
     else {
@@ -224,7 +234,7 @@ export default function() {
 
     noevent();
     g.wheel = setTimeout(wheelidled, wheelDelay);
-    g.zoom("mouse", constrain(translate(scale(t, k), g.mouse[0], g.mouse[1]), g.extent));
+    g.zoom("mouse", constrain(translate(scale(t, kx, ky), g.mouse[0], g.mouse[1]), g.extent));
 
     function wheelidled() {
       g.wheel = null;
@@ -263,8 +273,9 @@ export default function() {
     var t0 = this.__zoom,
         p0 = mouse(this),
         p1 = t0.invert(p0),
-        k1 = t0.k * (event.shiftKey ? 0.5 : 2),
-        t1 = constrain(translate(scale(t0, k1), p0, p1), extent.apply(this, arguments));
+        kx1 = t0.kx * (event.shiftKey ? 0.5 : 2),
+        ky1 = t0.ky * (event.shiftKey ? 0.5 : 2),
+        t1 = constrain(translate(scale(t0, kx1, ky1), p0, p1), extent.apply(this, arguments));
 
     noevent();
     if (duration > 0) select(this).transition().duration(duration).call(schedule, t1, p0);
@@ -356,7 +367,21 @@ export default function() {
   };
 
   zoom.scaleExtent = function(_) {
-    return arguments.length ? (k0 = +_[0], k1 = +_[1], zoom) : [k0, k1];
+    if (_.length) {
+      if (Array.isArray(_[0])) {
+        kx0 = +_[0][0];
+        kx1 = +_[0][1];
+        ky0 = +_[1][0];
+        ky1 = +_[1][1];
+      } else {
+        kx0 = +_[0];
+        kx1 = +_[1];
+        ky0 = kx0;
+        ky1 = kx1;
+      }
+      return zoom;
+    }
+    return [[kx0, kx1], [ky0, ky1]];
   };
 
   zoom.translateExtent = function(_) {

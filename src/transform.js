@@ -1,34 +1,35 @@
-export function Transform(k, x, y) {
-  this.k = k;
+export function Transform(x, y, kx, ky) {
+  this.kx = kx;
+  this.ky = ky || kx;
   this.x = x;
   this.y = y;
 }
 
 Transform.prototype = {
   constructor: Transform,
-  scale: function(k) {
-    return k === 1 ? this : new Transform(this.k * k, this.x, this.y);
+  scale: function(kx, ky) {
+    return kx === 1 && (!ky || ky === 1) ? this : new Transform(this.x, this.y, this.kx * kx, this.ky * ky);
   },
   translate: function(x, y) {
-    return x === 0 & y === 0 ? this : new Transform(this.k, this.x + this.k * x, this.y + this.k * y);
+    return x === 0 & y === 0 ? this : new Transform(this.x + this.kx * x, this.y + this.ky * y, this.kx, this.ky);
   },
   apply: function(point) {
-    return [point[0] * this.k + this.x, point[1] * this.k + this.y];
+    return [point[0] * this.kx + this.x, point[1] * this.ky + this.y];
   },
   applyX: function(x) {
-    return x * this.k + this.x;
+    return x * this.kx + this.x;
   },
   applyY: function(y) {
-    return y * this.k + this.y;
+    return y * this.ky + this.y;
   },
   invert: function(location) {
-    return [(location[0] - this.x) / this.k, (location[1] - this.y) / this.k];
+    return [(location[0] - this.x) / this.kx, (location[1] - this.y) / this.ky];
   },
   invertX: function(x) {
-    return (x - this.x) / this.k;
+    return (x - this.x) / this.kx;
   },
   invertY: function(y) {
-    return (y - this.y) / this.k;
+    return (y - this.y) / this.ky;
   },
   rescaleX: function(x) {
     return x.copy().domain(x.range().map(this.invertX, this).map(x.invert, x));
@@ -36,12 +37,13 @@ Transform.prototype = {
   rescaleY: function(y) {
     return y.copy().domain(y.range().map(this.invertY, this).map(y.invert, y));
   },
+  // TODO: Rewrite
   toString: function() {
     return "translate(" + this.x + "," + this.y + ") scale(" + this.k + ")";
   }
 };
 
-export var identity = new Transform(1, 0, 0);
+export var identity = new Transform(0, 0, 1);
 
 transform.prototype = Transform.prototype;
 
