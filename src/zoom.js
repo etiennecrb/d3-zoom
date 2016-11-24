@@ -207,11 +207,24 @@ export default function() {
 
   function wheeled() {
     if (!filter.apply(this, arguments)) return;
-    var g = gesture(this, arguments),
-        t = this.__zoom,
-        kx = Math.max(kx0, Math.min(kx1, t.kx * Math.pow(2, -event.deltaY * (event.deltaMode ? 120 : 1) / 500))),
-        ky = Math.max(ky0, Math.min(ky1, t.ky * Math.pow(2, -event.deltaY * (event.deltaMode ? 120 : 1) / 500))),
-        p = mouse(this);
+    var g = gesture(this, arguments);
+    var t = this.__zoom;
+    var kx = Math.max(kx0, Math.min(kx1, t.kx * Math.pow(2, -event.deltaY * (event.deltaMode ? 120 : 1) / 500)));
+    var ky = Math.max(ky0, Math.min(ky1, t.ky * Math.pow(2, -event.deltaY * (event.deltaMode ? 120 : 1) / 500)));
+    var p = mouse(this);
+
+    if (t.kx === kx0) {
+      kx = ky >= kx0 ? kx : kx0;
+    }
+    if (t.kx === kx1) {
+      kx = ky <= kx1 ? kx : kx1;
+    }
+    if (t.ky === ky0) {
+      ky = kx >= ky0 ? ky : ky0;
+    }
+    if (t.ky === ky1) {
+      ky = kx <= ky1 ? ky : ky1;
+    }
 
     // If the mouse is in the same location as before, reuse it.
     // If there were recent wheel events, reset the wheel idle timeout.
