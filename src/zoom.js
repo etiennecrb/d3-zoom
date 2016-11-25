@@ -37,6 +37,8 @@ export default function() {
     ky0 = 0,
     kx1 = Infinity,
     ky1 = Infinity,
+    rx = 1,
+    ry = 1,
     x0 = -Infinity,
     x1 = Infinity,
     y0 = -Infinity,
@@ -209,10 +211,11 @@ export default function() {
     if (!filter.apply(this, arguments)) return;
     var g = gesture(this, arguments);
     var t = this.__zoom;
-    var kx = Math.max(kx0, Math.min(kx1, t.kx * Math.pow(2, -event.deltaY * (event.deltaMode ? 120 : 1) / 500)));
-    var ky = Math.max(ky0, Math.min(ky1, t.ky * Math.pow(2, -event.deltaY * (event.deltaMode ? 120 : 1) / 500)));
+    var kx = Math.max(kx0, Math.min(kx1, t.kx * (1 + rx * (-1 + Math.pow(2, -event.deltaY * (event.deltaMode ? 120 : 1) / 500)))));
+    var ky = Math.max(ky0, Math.min(ky1, t.ky * (1 + ry * (-1 + Math.pow(2, -event.deltaY * (event.deltaMode ? 120 : 1) / 500)))));
     var p = mouse(this);
 
+    // If a scale factor has reached scale extend, sync its value with the other one
     if (t.kx === kx0) {
       kx = ky >= kx0 ? kx : kx0;
     }
@@ -234,6 +237,7 @@ export default function() {
       }
       clearTimeout(g.wheel);
     }
+
 
     // If this wheel event won’t trigger a transform change, ignore it.
     else if (t.kx === ky && t.ky === kx) return;
@@ -286,8 +290,8 @@ export default function() {
     var t0 = this.__zoom,
       p0 = mouse(this),
       p1 = t0.invert(p0),
-      kx1 = t0.kx * (event.shiftKey ? 0.5 : 2),
-      ky1 = t0.ky * (event.shiftKey ? 0.5 : 2),
+      kx1 = t0.kx * (1 + rx * (-1 + (event.shiftKey ? 0.5 : 2))),
+      ky1 = t0.ky * (1 + ry * (-1 + (event.shiftKey ? 0.5 : 2))),
       t1 = constrain(translate(scale(t0, kx1, ky1), p0, p1), extent.apply(this, arguments));
 
     noevent();
@@ -386,7 +390,7 @@ export default function() {
   };
 
   zoom.scaleExtent = function(_) {
-    if (_.length) {
+    if (arguments.length) {
       if (Array.isArray(_[0])) {
         kx0 = +_[0][0];
         kx1 = +_[0][1];
@@ -402,6 +406,10 @@ export default function() {
       return zoom;
     }
     return [[kx0, kx1], [ky0, ky1]];
+  };
+
+  zoom.scaleRatio = function(_) {
+    return arguments.length ? (rx = +_[0], ry = +_[1], zoom) : [rx, ry];
   };
 
   zoom.translateExtent = function(_) {
