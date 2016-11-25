@@ -371,12 +371,18 @@ export default function() {
     if (!g.touch0) g.end();
   }
 
+  function constrainScaleExtent() {
+    kx0 = Math.max(kx0, (extent()[1][0] - extent()[0][0]) / (x1 - x0));
+    ky0 = Math.max(ky0, (extent()[1][1] - extent()[0][1]) / (y1 - y0));
+  }
+
+
   zoom.filter = function(_) {
     return arguments.length ? (filter = typeof _ === "function" ? _ : constant(!!_), zoom) : filter;
   };
 
   zoom.extent = function(_) {
-    return arguments.length ? (extent = typeof _ === "function" ? _ : constant([[+_[0][0], +_[0][1]], [+_[1][0], +_[1][1]]]), zoom) : extent;
+    return arguments.length ? (extent = typeof _ === "function" ? _ : constant([[+_[0][0], +_[0][1]], [+_[1][0], +_[1][1]]]), constrainScaleExtent(), zoom) : extent;
   };
 
   zoom.scaleExtent = function(_) {
@@ -392,19 +398,14 @@ export default function() {
         ky0 = kx0;
         ky1 = kx1;
       }
+      constrainScaleExtent();
       return zoom;
     }
     return [[kx0, kx1], [ky0, ky1]];
   };
 
   zoom.translateExtent = function(_) {
-    return arguments.length ? (x0 = +_[0][0], x1 = +_[1][0], y0 = +_[0][1], y1 = +_[1][1], zoom) : [[x0, y0], [x1, y1]];
-  };
-
-  zoom.constrainScaleByTranslateExtent = function() {
-    kx0 = Math.max(kx0, (extent()[1][0] - extent()[0][0]) / (x1 - x0));
-    ky0 = Math.max(ky0, (extent()[1][1] - extent()[0][1]) / (y1 - y0));
-    return zoom;
+    return arguments.length ? (x0 = +_[0][0], x1 = +_[1][0], y0 = +_[0][1], y1 = +_[1][1], constrainScaleExtent(), zoom) : [[x0, y0], [x1, y1]];
   };
 
   zoom.duration = function(_) {
