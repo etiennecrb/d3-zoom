@@ -1,0 +1,24 @@
+{
+  "name": "d3-zoom",
+  "description": "Pan and zoom SVG, HTML or Canvas using mouse or touch input.",
+  "main": "build/d3-zoom.js",
+  "authors": [
+    "Mike Bostock"
+  ],
+  "license": "BSD-3-Clause",
+  "keywords": [
+    "d3",
+    "d3-module",
+    "zoom",
+    "behavior",
+    "interaction"
+  ],
+  "homepage": "https://github.com/etiennecrb/d3-zoom",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
