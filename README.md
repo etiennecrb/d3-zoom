@@ -1,5 +1,11 @@
 # d3-zoom
 
+This is a fork of d3-zoom that provides a way to separate scaling on x and y.
+
+[Demo](https://bl.ocks.org/etiennecrb/d8125cdfb138896635dabd84b04b54e9)
+
+[Diff](https://github.com/d3/d3-zoom/compare/master...etiennecrb:master)
+
 Panning and zooming are popular interaction techniques which let the user focus on a region of interest by restricting the view. It is easy to learn due to direct manipulation: click-and-drag to pan (translate), spin the wheel to zoom (scale), or use touch. Panning and zooming are widely used in web-based mapping, but can also be used with visualizations such as time-series and scatterplots.
 
 The zoom behavior implemented by d3-zoom is a convenient but flexible abstraction for enabling pan-and-zoom on [selections](https://github.com/d3/d3-selection). It handles a surprising variety of [input events](#api-reference ) and browser quirks. The zoom behavior is agnostic about the DOM, so you can use it with SVG, HTML or Canvas.
