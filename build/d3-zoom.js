@@ -27,6 +27,7 @@ function Transform(x, y, kx, ky) {
 Transform.prototype = {
   constructor: Transform,
   scale: function(kx, ky) {
+    ky = ky === undefined ? kx : ky;
     return kx === 1 && (!ky || ky === 1) ? this : new Transform(this.x, this.y, this.kx * kx, this.ky * ky);
   },
   translate: function(x, y) {
@@ -56,13 +57,12 @@ Transform.prototype = {
   rescaleY: function(y) {
     return y.copy().domain(y.range().map(this.invertY, this).map(y.invert, y));
   },
-  // TODO: Rewrite
   toString: function() {
-    return "translate(" + this.x + "," + this.y + ") scale(" + this.k + ")";
+    return "translate(" + this.x + "," + this.y + ") scale(" + this.kx + "," + this.ky + ")";
   }
 };
 
-var identity = new Transform(0, 0, 1);
+var identity = new Transform(0, 0, 1, 1);
 
 transform.prototype = Transform.prototype;
 
