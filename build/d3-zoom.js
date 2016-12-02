@@ -115,7 +115,7 @@ var zoom = function() {
     y0 = -Infinity,
     y1 = Infinity,
     duration = 250,
-    interpolate = d3Interpolate.interpolateZoom,
+    interpolate = d3Interpolate.interpolateNumber,
     gestures = [],
     listeners = d3Dispatch.dispatch("start", "zoom", "end"),
     touchstarting,
@@ -209,8 +209,7 @@ var zoom = function() {
     return [(+extent[0][0] + +extent[1][0]) / 2, (+extent[0][1] + +extent[1][1]) / 2];
   }
 
-  // TODO: ky?
-  function schedule(transition, transform, center) {
+  function schedule(transition, transform) {
     transition
       .on("start.zoom", function() { gesture(this, arguments).start(); })
       .on("interrupt.zoom end.zoom", function() { gesture(this, arguments).end(); })
@@ -218,15 +217,17 @@ var zoom = function() {
         var that = this,
           args = arguments,
           g = gesture(that, args),
-          e = extent.apply(that, args),
-          p = center || centroid(e),
-          w = Math.max(e[1][0] - e[0][0], e[1][1] - e[0][1]),
           a = that.__zoom,
-          b = typeof transform === "function" ? transform.apply(that, args) : transform,
-          i = interpolate(a.invert(p).concat(w / a.kx), b.invert(p).concat(w / b.kx));
+          b = typeof transform === "function" ? transform.apply(that, args) : transform;
+        var txi = interpolate(a.x, b.x);
+        var tyi = interpolate(a.y, b.y);
+        var kxi = interpolate(a.kx, b.kx);
+        var kyi = interpolate(a.ky, b.ky);
         return function(t) {
           if (t === 1) t = b; // Avoid rounding error on end.
-          else { var l = i(t), kx = w / l[2]; t = new Transform(p[0] - l[0] * kx, p[1] - l[1] * kx, kx, kx); }
+          else {
+            t = new Transform(txi(t), tyi(t), kxi(t), kyi(t));
+          }
           g.zoom(null, t);
         };
       });

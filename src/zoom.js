@@ -44,7 +44,7 @@ export default function() {
     y0 = -Infinity,
     y1 = Infinity,
     duration = 250,
-    interpolate = interpolateZoom,
+    interpolate = interpolateNumber,
     gestures = [],
     listeners = dispatch("start", "zoom", "end"),
     touchstarting,
@@ -148,10 +148,10 @@ export default function() {
           g = gesture(that, args),
           a = that.__zoom,
           b = typeof transform === "function" ? transform.apply(that, args) : transform;
-        var txi = interpolateNumber(a.x, b.x);
-        var tyi = interpolateNumber(a.y, b.y);
-        var kxi = interpolateNumber(a.kx, b.kx);
-        var kyi = interpolateNumber(a.ky, b.ky);
+        var txi = interpolate(a.x, b.x);
+        var tyi = interpolate(a.y, b.y);
+        var kxi = interpolate(a.kx, b.kx);
+        var kyi = interpolate(a.ky, b.ky);
         return function(t) {
           if (t === 1) t = b; // Avoid rounding error on end.
           else {
