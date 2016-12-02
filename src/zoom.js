@@ -1,6 +1,6 @@
 import {dispatch} from "d3-dispatch";
 import {dragDisable, dragEnable} from "d3-drag";
-import {interpolateZoom} from "d3-interpolate";
+import {interpolateNumber} from "d3-interpolate";
 import {event, customEvent, select, mouse, touch} from "d3-selection";
 import {interrupt} from "d3-transition";
 import constant from "./constant";
@@ -138,8 +138,7 @@ export default function() {
     return [(+extent[0][0] + +extent[1][0]) / 2, (+extent[0][1] + +extent[1][1]) / 2];
   }
 
-  // TODO: ky?
-  function schedule(transition, transform, center) {
+  function schedule(transition, transform) {
     transition
       .on("start.zoom", function() { gesture(this, arguments).start(); })
       .on("interrupt.zoom end.zoom", function() { gesture(this, arguments).end(); })
@@ -147,15 +146,17 @@ export default function() {
         var that = this,
           args = arguments,
           g = gesture(that, args),
-          e = extent.apply(that, args),
-          p = center || centroid(e),
-          w = Math.max(e[1][0] - e[0][0], e[1][1] - e[0][1]),
           a = that.__zoom,
-          b = typeof transform === "function" ? transform.apply(that, args) : transform,
-          i = interpolate(a.invert(p).concat(w / a.kx), b.invert(p).concat(w / b.kx));
+          b = typeof transform === "function" ? transform.apply(that, args) : transform;
+        var txi = interpolateNumber(a.x, b.x);
+        var tyi = interpolateNumber(a.y, b.y);
+        var kxi = interpolateNumber(a.kx, b.kx);
+        var kyi = interpolateNumber(a.ky, b.ky);
         return function(t) {
           if (t === 1) t = b; // Avoid rounding error on end.
-          else { var l = i(t), kx = w / l[2]; t = new Transform(p[0] - l[0] * kx, p[1] - l[1] * kx, kx, kx); }
+          else {
+            t = new Transform(txi(t), tyi(t), kxi(t), kyi(t));
+          }
           g.zoom(null, t);
         };
       });

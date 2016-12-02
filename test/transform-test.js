@@ -2,21 +2,21 @@ var tape = require("tape"),
     d3 = require("../"),
     identity = d3.zoomIdentity;
 
-tape("d3.zoomIdentity transform contains k = 1, x = y = 0", function(test) {
-  test.deepEqual(toObject(identity), {k: 1, x: 0, y: 0});
+tape("d3.zoomIdentity transform contains kx = 1, ky = 1, x = y = 0", function(test) {
+  test.deepEqual(toObject(identity), {kx: 1, ky: 1, x: 0, y: 0});
   test.end();
 });
 
-tape("transform.scale(k) returns a new transform scaled with k", function(test) {
-  var transform = identity.scale(2.5);
-  test.deepEqual(toObject(transform.scale(2)), {k: 5, x: 0, y: 0});
+tape("transform.scale(kx, ky) returns a new transform scaled with kx, ky", function(test) {
+  var transform = identity.scale(2.5, 4);
+  test.deepEqual(toObject(transform.scale(2, 3)), {kx: 5, ky: 12, x: 0, y: 0});
   test.end();
 });
 
 tape("transform.translate(x, y) returns a new transform translated with x and y", function(test) {
   var transform = identity.translate(2, 3);
-  test.deepEqual(toObject(transform.translate(-4, 4)), {k: 1, x: -2, y: 7});
-  test.deepEqual(toObject(transform.scale(2).translate(-4, 4)), {k: 2, x: -6, y: 11});
+  test.deepEqual(toObject(transform.translate(-4, 4)), {kx: 1, ky: 1, x: -2, y: 7});
+  test.deepEqual(toObject(transform.scale(2).translate(-4, 4)), {kx: 2, ky: 2, x: -6, y: 11});
   test.end();
 });
 
@@ -55,10 +55,10 @@ tape("transform.invertY(y) returns the inverse transformation of the specified y
 // transform.rescaleY(y)
 
 tape("transform.toString() returns a string representing the SVG transform", function(test) {
-  test.equal(d3.zoomIdentity.toString(), "translate(0,0) scale(1)");
+  test.equal(d3.zoomIdentity.toString(), "translate(0,0) scale(1,1)");
   test.end();
 });
 
 function toObject(transform) {
-  return {k: transform.k, x: transform.x, y: transform.y};
+  return {kx: transform.kx, ky: transform.ky, x: transform.x, y: transform.y};
 }
